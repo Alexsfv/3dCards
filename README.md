@@ -1,6 +1,6 @@
-**3D item card**  
+**3D Item card**  
 
-[Ссылка на пример](https://rock-scissors-paper-alexsfv.web.app/)  
+[Ссылка на пример](https://cards-3d-alexsfv.web.app/)  
 
 ## Инициализация  
 
