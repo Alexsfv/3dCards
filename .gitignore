@@ -1,0 +1,7 @@
+build
+node_modules
+.firebase
+.babelrc
+.firebaserc
+firebase.json
+firebaseInit.txt
