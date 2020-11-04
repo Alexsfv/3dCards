@@ -1,63 +1,69 @@
 const card = {
     body: {
         selector: '.card',
-        maxRotateX: '35',
-        maxRotateY: '35'
+        maxRotateX: '45',
+        maxRotateY: '45',
+        perspective: '1000px'
     },
     like: {
         selector: '.card__like',
-        maxZ: '60px',
-        perspective: '1000px'
+        maxZ: '61px',
     },
     img: {
         selector: '.card__img',
         maxZ: '60px',
-        perspective: '1000px'
     },
     name: {
         selector: '.card__name',
-        maxZ: '60px',
-        perspective: '1000px'
+        maxZ: '50px',
     },
     description: {
         selector: '.card__description',
-        maxZ: '60px',
-        perspective: '1000px'
+        maxZ: '40px',
     },
     price: {
         selector: '.card__price',
-        maxZ: '60px',
-        perspective: '1000px'
+        maxZ: '30px',
     },
     btn: {
         selector: '.btn-add-card',
-        maxZ: '60px',
-        perspective: '1000px'
+        maxZ: '1px',
     }
 }
+const mobileRangeAngel = 30
+/// setting end
 
-window.addEventListener('mousemove', moveHandler)
+const isMobile = window.navigator.maxTouchPoints > 0
 
-function moveHandler(e) {
-    card1.recalcStyles(e.clientX, e.clientY)
+const startDegrees = {
+    x: '',
+    y: ''
 }
 
 class Card {
     constructor(params) {
+    
         this.params = params
         this.elems = {}
-        this.body = document.querySelector(params.body.selector)
-        this.elems.like = document.querySelector(params.like.selector)
-        this.elems.img = document.querySelector(params.img.selector)
-        this.elems.name = document.querySelector(params.name.selector)
-        this.elems.description = document.querySelector(params.description.selector)
-        this.elems.price = document.querySelector(params.price.selector)
-        this.elems.btn = document.querySelector(params.btn.selector)
+        this.body = params.body.elem
 
+        this.getBodyChildren()
         this.setElemsStyle()
     }
 
+    getBodyChildren() {
+        Object.keys(this.params).forEach(elementName => {
+            if (elementName === 'body') {
+                return
+            }
+            this.elems[elementName] =  this.body.querySelector(this.params[elementName].selector)
+        }, this)
+    }
+
     recalcStyles(mouseX, mouseY) {
+        if (isMobile) {
+            return
+        }
         const rotateY = this.getRotateY(mouseX)
         const rotateX = this.getRotateX(mouseY)
         this.body.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`
@@ -87,24 +93,71 @@ class Card {
         }
     }
 
+    recalcStylesMobile(deltaX, deltaY) {
+        const rotateX = - this.getRotateXMobile(deltaX)
+        const rotateY = this.getRotateXMobile(deltaY)
+
+        this.body.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`
+    }
+
+    getRotateXMobile(deltaX) {
+        const rotationBody = (deltaX / mobileRangeAngel ) * +this.params.body.maxRotateX
+        return Math.abs(rotationBody) > +this.params.body.maxRotateX ? Math.sign(rotationBody) * +this.params.body.maxRotateX : rotationBody
+    }
+
+    getRotateYMobile(deltaY) {
+        const rotationBody = (deltaY / mobileRangeAngel ) * +this.params.body.maxRotateY
+        return Math.abs(rotationBody) > +this.params.body.maxRotateX ? Math.sign(rotationBody) * +this.params.body.maxRotateX : rotationBody
+    }
+
     setElemsStyle() {
         for (let elem in this.elems) {
             if (this.elems.hasOwnProperty(elem)) {
-                this.elems[elem].style = `transform: perspective(${this.params[elem].perspective}) translateZ(${this.params[elem].maxZ});`
+                this.elems[elem].style = `transform: perspective(${this.params.body.perspective}) translateZ(${this.params[elem].maxZ});`
             }
         }
     }
 }
 
+let cards = createCards(card)
+if (isMobile) {
+    window.addEventListener('deviceorientation', moveCardMobile)
+} else {
+    window.addEventListener('mousemove', moveHandler)
+}
 
-
-
+function moveHandler(e) {
+    if (!isMobile) {
+        cards.forEach(card => {
+            card.recalcStyles(e.clientX, e.clientY)
+        })
+    }
+}
 
 function createCards(params) {
     const bodies = document.querySelectorAll(params.body.selector)
-    return bodies.map(body => {
-        return new Card()
+    const cards = []
+    bodies.forEach(body => {
+        const cardElements = {...params}
+        cardElements.body.elem = body
+
+        cards.push(new Card(cardElements))
     })
+    return cards
 }
 
-const card1 = new Card(card)
+function moveCardMobile(e) {
+    let [axisX, axisY] = window.innerHeight > window.innerWidth ? [e.beta, e.gamma] : [-e.gamma, e.beta]
+
+    if (startDegrees.x === '' || startDegrees.y === '' || startDegrees.x === 0) {
+        startDegrees.x = axisX
+        startDegrees.y = axisY
+    }
+
+    const deltaX = axisX - startDegrees.x
+    const deltaY = axisY - startDegrees.y
+
+    cards.forEach(card => {
+        card.recalcStylesMobile(deltaX, deltaY)
+    })
+}
